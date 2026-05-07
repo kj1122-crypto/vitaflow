@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root {
+  --bg: #050d1a;
+  --card: #0f1e35;
+  --accent: #00d4ff;
+  --accent2: #7c3aed;
+  --accent3: #10b981;
+  --accent4: #f59e0b;
+  --muted: #7a9ab5;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: white; font-family: 'Outfit', sans-serif; min-height: 100vh; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(100,180,255,0.2); border-radius: 2px; }
