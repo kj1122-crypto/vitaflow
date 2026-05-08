@@ -457,4 +457,27 @@ export default function Dashboard() {
                 <p style={{textAlign:'center',fontSize:11,color:'#666',marginTop:8}}>Limited spots · Personal onboarding call included</p>
               </div>
 
-              
+              {/* OEM WATCH INFO */}
+              <div style={{...card,background:goldLight,border:'1px solid '+goldBorder}}>
+                <div style={{fontSize:15,fontWeight:700,color:'#1a1a1a',marginBottom:8}}>⌚ VitaCore Watch — OEM Info</div>
+                <div style={{fontSize:13,color:'#666',lineHeight:1.7,marginBottom:12}}>
+                  We source from <strong>Shenzhen & Guangzhou</strong> OEM manufacturers.<br/>
+                  Similar Apple Watch UI/UX, Bluetooth health sync, your branding.
+                </div>
+                {[{l:'MOQ',v:'1,000 pieces'},{l:'Est. unit cost',v:'USD 25–45 per unit'},{l:'Total budget',v:'USD 25,000–45,000'},{l:'Lead time',v:'60–90 days'},{l:'Features',v:'Heart rate, SpO₂, steps, sleep, BT sync'},{l:'Recommended vendors',v:'Huaqiangbei, Shenzhen OEM district'}].map(r=>(
+                  <div key={r.l} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid '+goldBorder,fontSize:13}}>
+                    <span style={{color:'#666'}}>{r.l}</span>
+                    <span style={{fontWeight:600,color:'#1a1a1a',textAlign:'right',maxWidth:'60%'}}>{r.v}</span>
+                  </div>
+                ))}
+                <button style={{width:'100%',padding:12,borderRadius:12,background:'#0A0A0A',border:'none',color:'#fff',fontFamily:'inherit',fontSize:13,fontWeight:600,cursor:'pointer',marginTop:12}}>Contact OEM Supplier →</button>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  )
+}
