@@ -1,4 +1,14 @@
-'use client'
+const fs = require('fs');
+const path = require('path');
+
+function write(filePath, content) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log('✓ Created: ' + filePath);
+}
+
+// Enhanced dashboard with premium white design
+write('app/dashboard/page.tsx', `'use client'
 import { useState, useEffect, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -57,7 +67,7 @@ function OnboardingGuide({step, onClose, onNext}) {
     {title:'Welcome to VitaCore',desc:'This is your health dashboard. Track all your vital metrics, calories, sleep and more in real time.',icon:'🏠'},
     {title:'Your AI Health Coach',desc:'Chat with our Claude-powered AI coach anytime. Ask about meals, workouts, or how to slim specific body parts.',icon:'🧠'},
     {title:'Earn XP & Rewards',desc:'Complete daily quests to earn XP points. Redeem them for smart watches, weight scales and exclusive vouchers!',icon:'⚔️'},
-    {title:'Referral Program',desc:'Share your referral link. Every 10 successful referrals earns you RM50 vouchers for KFC, McDonald's and more!',icon:'🎁'},
+    {title:'Referral Program',desc:'Share your referral link. Every 10 successful referrals earns you RM50 vouchers for KFC, McDonald\'s and more!',icon:'🎁'},
     {title:'Connect Your Device',desc:'Sync your VitaCore Watch or any Bluetooth device to automatically track workouts and health data.',icon:'⌚'},
   ]
   const s = steps[step]||steps[0]
@@ -367,7 +377,7 @@ export default function Dashboard() {
               <div style={{fontSize:12,fontWeight:600,color:'#999',textTransform:'uppercase',letterSpacing:1,margin:'16px 0 10px'}}>🏆 Weekly Top 3 · Win Prizes!</div>
               <div style={card}>
                 <div style={{fontSize:12,color:'#666',marginBottom:12}}>Top 3 each week win exclusive rewards — smart watch, vouchers & more!</div>
-                {[{rank:'🥇',name:'ZenFit_Sara',xp:'3,240',prize:'VitaCore Watch'},{rank:'🥈',name:name+' (You)',xp:userXp.toLocaleString(),prize:'RM50 KFC Voucher'},{rank:'🥉',name:'IronMike_KL',xp:'2,150',prize:'RM50 McDonald's'}].map(l=>(
+                {[{rank:'🥇',name:'ZenFit_Sara',xp:'3,240',prize:'VitaCore Watch'},{rank:'🥈',name:name+' (You)',xp:userXp.toLocaleString(),prize:'RM50 KFC Voucher'},{rank:'🥉',name:'IronMike_KL',xp:'2,150',prize:'RM50 McDonald\'s'}].map(l=>(
                   <div key={l.name} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid #f5f5f5'}}>
                     <div style={{fontSize:22,width:32,textAlign:'center'}}>{l.rank}</div>
                     <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600}}>{l.name}</div><div style={{fontSize:11,color:gold}}>{l.prize}</div></div>
@@ -481,3 +491,6 @@ export default function Dashboard() {
     </div>
   )
 }
+`);
+
+console.log('\\n✅ Enhanced dashboard ready! Run: git add . && git commit -m "premium white dashboard" && git push');
