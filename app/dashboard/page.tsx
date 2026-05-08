@@ -57,7 +57,7 @@ function OnboardingGuide({step, onClose, onNext}) {
     {title:'Welcome to VitaCore',desc:'This is your health dashboard. Track all your vital metrics, calories, sleep and more in real time.',icon:'🏠'},
     {title:'Your AI Health Coach',desc:'Chat with our Claude-powered AI coach anytime. Ask about meals, workouts, or how to slim specific body parts.',icon:'🧠'},
     {title:'Earn XP & Rewards',desc:'Complete daily quests to earn XP points. Redeem them for smart watches, weight scales and exclusive vouchers!',icon:'⚔️'},
-    {title:'Referral Program',desc:'Share your referral link. Every 10 successful referrals earns you RM50 vouchers for KFC, McDonald's and more!',icon:'🎁'},
+    {title:'Referral Program',desc:'Share your referral link. Every 10 successful referrals earns you RM50 vouchers for KFC, McDonalds and more!',icon:'🎁'},
     {title:'Connect Your Device',desc:'Sync your VitaCore Watch or any Bluetooth device to automatically track workouts and health data.',icon:'⌚'},
   ]
   const s = steps[step]||steps[0]
@@ -133,7 +133,7 @@ export default function Dashboard() {
     {icon:'⚖️',name:'Smart Scale',xp:20000,unlocked:userXp>=20000},
     {icon:'🎧',name:'Earbuds',xp:15000,unlocked:userXp>=15000},
     {icon:'🍔',name:'KFC RM50',xp:5000,unlocked:userXp>=5000},
-    {icon:'🍟',name:"McDonald's RM50",xp:5000,unlocked:userXp>=5000},
+    {icon:'🍟',name:"McDonalds RM50",xp:5000,unlocked:userXp>=5000},
     {icon:'🏃',name:'Marathon Entry',xp:8000,unlocked:userXp>=8000},
   ]
 
@@ -224,7 +224,7 @@ export default function Dashboard() {
               <div style={{fontSize:12,fontWeight:600,color:'#999',textTransform:'uppercase',letterSpacing:1,margin:'16px 0 10px'}}>Referral Program</div>
               <div style={{...card,background:goldLight,border:'1px solid '+goldBorder}}>
                 <div style={{fontSize:15,fontWeight:600,color:'#1a1a1a',marginBottom:4}}>🎁 Invite friends, earn rewards!</div>
-                <div style={{fontSize:13,color:'#666',marginBottom:12,lineHeight:1.6}}>Every 10 successful referrals = <strong>RM50 voucher</strong> (KFC, McDonald's & more)</div>
+                <div style={{fontSize:13,color:'#666',marginBottom:12,lineHeight:1.6}}>Every 10 successful referrals = <strong>RM50 voucher</strong> (KFC, McDonalds & more)</div>
                 <div style={{display:'flex',alignItems:'center',gap:8,background:'#fff',borderRadius:10,padding:'10px 14px',border:'1px solid '+goldBorder,marginBottom:12,cursor:'pointer'}} onClick={copyReferral}>
                   <span style={{flex:1,fontSize:13,color:'#666',fontFamily:'monospace'}}>vitacore.app/ref/{profile?.id?.slice(0,8)||'ABC123'}</span>
                   <span style={{fontSize:13,color:gold,fontWeight:600}}>{copied?'Copied! ✓':'Copy'}</span>
@@ -367,7 +367,7 @@ export default function Dashboard() {
               <div style={{fontSize:12,fontWeight:600,color:'#999',textTransform:'uppercase',letterSpacing:1,margin:'16px 0 10px'}}>🏆 Weekly Top 3 · Win Prizes!</div>
               <div style={card}>
                 <div style={{fontSize:12,color:'#666',marginBottom:12}}>Top 3 each week win exclusive rewards — smart watch, vouchers & more!</div>
-                {[{rank:'🥇',name:'ZenFit_Sara',xp:'3,240',prize:'VitaCore Watch'},{rank:'🥈',name:name+' (You)',xp:userXp.toLocaleString(),prize:'RM50 KFC Voucher'},{rank:'🥉',name:'IronMike_KL',xp:'2,150',prize:'RM50 McDonald's'}].map(l=>(
+                {[{rank:'🥇',name:'ZenFit_Sara',xp:'3,240',prize:'VitaCore Watch'},{rank:'🥈',name:name+' (You)',xp:userXp.toLocaleString(),prize:'RM50 KFC Voucher'},{rank:'🥉',name:'IronMike_KL',xp:'2,150',prize:'RM50 McDonalds'}].map(l=>(
                   <div key={l.name} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid #f5f5f5'}}>
                     <div style={{fontSize:22,width:32,textAlign:'center'}}>{l.rank}</div>
                     <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600}}>{l.name}</div><div style={{fontSize:11,color:gold}}>{l.prize}</div></div>
