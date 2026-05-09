@@ -1,4 +1,13 @@
-'use client'
+const fs = require('fs');
+const path = require('path');
+
+function write(filePath, content) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log('Created: ' + filePath);
+}
+
+write('app/dashboard/page.tsx', `'use client'
 import { useState, useEffect, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -523,3 +532,9 @@ export default function Dashboard() {
     </div>
   )
 }
+`);
+
+console.log('\nAll done! Now run:');
+console.log('git add .');
+console.log('git commit -m "clean dashboard no apostrophes"');
+console.log('git push');
