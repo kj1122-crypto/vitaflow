@@ -7,7 +7,7 @@ const gold = '#B8860B'
 const goldLight = '#FDF6DC'
 const goldBorder = '#E8C84A'
 
-function AiCoach({ isPro, userName }) {
+function AiCoach({ isPro, userName }: { isPro: boolean, userName: string }) {
   const [messages, setMessages] = useState([{ role: 'assistant', content: 'Hello ' + (userName || 'there') + '! I am your VitaCore AI Health Coach powered by Claude. Ask me anything about nutrition, workouts, or how to slim specific body parts!' }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -50,7 +50,7 @@ function AiCoach({ isPro, userName }) {
   )
 }
 
-function PdpaModal({ onAgree }) {
+function PdpaModal({ onAgree }: { onAgree: ()=>void }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: 28, width: '100%', maxWidth: 480, maxHeight: '80vh', overflowY: 'auto' }}>
@@ -67,7 +67,7 @@ function PdpaModal({ onAgree }) {
   )
 }
 
-function OnboardingGuide({ step, onClose, onNext }) {
+function OnboardingGuide({ step, onClose, onNext }: { step: number, onClose: ()=>void, onNext: ()=>void }) {
   const steps = [
     { title: 'Welcome to VitaCore', desc: 'Your premium AI health companion. Track health, earn rewards, and connect with friends on your wellness journey.', icon: 'Home' },
     { title: 'AI Health Coach', desc: 'Chat with Claude-powered AI anytime. Get personalized meal plans, workout advice, and body slimming tips.', icon: 'Brain' },
@@ -97,7 +97,7 @@ function OnboardingGuide({ step, onClose, onNext }) {
   )
 }
 
-function ChatTab({ profile }) {
+function ChatTab({ profile }: { profile: any }) {
   const friends = [
     { id: '1', name: 'Sarah Lim', avatar: 'SL', status: 'online', lastMsg: 'Great workout today!', time: '2m', unread: 2 },
     { id: '2', name: 'Mike Tan', avatar: 'MT', status: 'online', lastMsg: 'Did you hit your steps goal?', time: '15m', unread: 0 },
