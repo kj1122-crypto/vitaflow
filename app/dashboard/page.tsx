@@ -469,21 +469,7 @@ export default function Dashboard() {
                 </div>
               ))}
 
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: 0.8, margin: '14px 0 8px' }}>Referral Program</div>
-              <div style={{ ...card, background: goldLight, border: '1px solid ' + goldBorder }}>
-                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>🎁 Invite friends, earn rewards!</div>
-                <div style={{ fontSize: 12, color: '#854F0B', marginBottom: 10, lineHeight: 1.6 }}>Every 10 referrals = <strong>RM50 voucher</strong> (KFC & McDonalds)</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 8, padding: '8px 12px', border: '1px solid ' + goldBorder, marginBottom: 10, cursor: 'pointer' }} onClick={copyReferral}>
-                  <span style={{ flex: 1, fontSize: 12, color: '#854F0B', fontFamily: 'monospace' }}>vitacore.app/ref/{profile?.id?.slice(0, 8) || 'ABC123'}</span>
-                  <span style={{ fontSize: 12, color: gold, fontWeight: 600 }}>{copied ? 'Copied!' : 'Copy'}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 3 }}>
-                  {Array.from({ length: 10 }, (_, i) => (
-                    <div key={i} style={{ flex: 1, height: 18, borderRadius: 3, background: i < 3 ? gold : '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: i < 3 ? '#fff' : '#ccc' }}>{i < 3 ? '✓' : i + 1}</div>
-                  ))}
-                </div>
-              </div>
-
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: 0.8, margin: '14px 0 8px' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: 0.8, margin: '14px 0 8px' }}>Active Campaigns</div>
               {[{ icon: '🏃', name: 'KL Marathon 2026', date: 'Jun 15 · Earn 2,000 XP', color: '#2196F3', bg: '#EBF4FF' }, { icon: '🏸', name: 'Badminton Tournament', date: 'Jul 8 · Earn 1,500 XP', color: '#10b981', bg: '#E8F8F2' }, { icon: '🎾', name: 'Pickleball Open', date: 'Jul 22 · Earn 1,500 XP', color: '#FF6B35', bg: '#FFF0EB' }].map(c2 => (
                 <div key={c2.name} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12 }}>
