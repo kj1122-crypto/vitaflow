@@ -468,7 +468,7 @@ export default function Dashboard() {
           {/* AI COACH */}
           {tab === 'ai' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, padding: 14, ...greenCardStyle, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, ...greenCardStyle }}>
                 <div style={{ width: 44, height: 44, borderRadius: 12, background: green, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, color: '#fff', fontWeight: 700 }}>AI</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, color: greenDark }}>VellCare AI Coach</div>
