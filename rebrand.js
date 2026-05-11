@@ -1,4 +1,22 @@
-'use client'
+const fs = require('fs');
+const path = require('path');
+
+function write(filePath, content) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log('Created: ' + filePath);
+}
+
+// New brand colors
+// Primary green: #10B981 (emerald)
+// Light green: #D1FAE5
+// Border green: #6EE7B7
+// Dark text: #064E3B
+// Background: #FAFAFA
+// White: #FFFFFF
+// Accent dark: #065F46
+
+write('app/dashboard/page.tsx', `'use client'
 import { useState, useEffect, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -565,3 +583,166 @@ export default function Dashboard() {
     </div>
   )
 }
+`);
+
+// Also update the landing page
+write('app/page.tsx', `'use client'
+import Link from 'next/link'
+
+const green = '#10B981'
+const greenLight = '#D1FAE5'
+const greenBorder = '#6EE7B7'
+const greenDark = '#065F46'
+
+export default function Home() {
+  return (
+    <main style={{ background: '#fff', minHeight: '100vh', fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif', color: '#111827' }}>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', borderBottom: '1px solid #F3F4F6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: green, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>V</div>
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>VellCare<span style={{ color: green }}>AI</span></span>
+        </div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <Link href="/login" style={{ padding: '8px 18px', borderRadius: 10, color: '#6B7280', border: '1px solid #E5E7EB', textDecoration: 'none', fontSize: 14 }}>Sign In</Link>
+          <Link href="/signup" style={{ padding: '8px 18px', borderRadius: 10, background: green, color: '#fff', fontWeight: 600, textDecoration: 'none', fontSize: 14 }}>Start Free</Link>
+        </div>
+      </nav>
+      <section style={{ textAlign: 'center', padding: '80px 20px', maxWidth: 640, margin: '0 auto' }}>
+        <div style={{ display: 'inline-block', padding: '6px 16px', borderRadius: 20, background: greenLight, color: greenDark, fontSize: 13, marginBottom: 24, border: '1px solid ' + greenBorder, fontWeight: 500 }}>Super AI Health App - VCAI</div>
+        <h1 style={{ fontSize: 48, fontWeight: 700, lineHeight: 1.2, marginBottom: 20, color: '#111827' }}>
+          Your health, powered by<br /><span style={{ color: green }}>intelligent care</span>
+        </h1>
+        <p style={{ fontSize: 18, color: '#6B7280', marginBottom: 40, lineHeight: 1.7 }}>VellCareAI combines AI health coaching, real-time body tracking, gamified quests, and premium concierge care - all in one fresh, intelligent platform.</p>
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link href="/signup" style={{ padding: '16px 36px', borderRadius: 14, background: green, color: '#fff', fontWeight: 700, fontSize: 17, textDecoration: 'none' }}>Start Free Today</Link>
+          <Link href="/pricing" style={{ padding: '16px 36px', borderRadius: 14, border: '1px solid ' + greenBorder, color: greenDark, fontWeight: 600, fontSize: 17, textDecoration: 'none' }}>See Plans</Link>
+        </div>
+        <p style={{ marginTop: 16, fontSize: 13, color: '#9CA3AF' }}>No credit card required - 7-day free trial on Pro</p>
+      </section>
+      <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px 80px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
+          {[
+            { icon: 'brain', title: 'AI Health Coach', desc: 'Claude-powered AI that knows your biometrics and gives truly personalized health advice, meal plans, and workout guidance.' },
+            { icon: 'quest', title: 'Gamified Quests', desc: 'Earn XP by completing health goals. Level up, hit streaks, and compete on the leaderboard for real prizes every week.' },
+            { icon: 'food', title: 'Smart Meal Plans', desc: 'AI generates daily meal plans tailored to your macros, allergies, fitness goals, and body type.' },
+          ].map(f => (
+            <div key={f.title} style={{ padding: 24, borderRadius: 16, background: '#fff', border: '1px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: greenLight, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, border: '1px solid ' + greenBorder }}>
+                <span style={{ fontSize: 20, color: green }}>+</span>
+              </div>
+              <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 8, color: '#111827' }}>{f.title}</h3>
+              <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.6 }}>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </main>
+  )
+}
+`);
+
+// Update signup page
+write('app/signup/page.tsx', `'use client'
+import { useState } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+
+const green = '#10B981'
+const greenLight = '#D1FAE5'
+const greenDark = '#065F46'
+
+export default function Signup() {
+  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  const router = useRouter()
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handle(e: React.FormEvent) {
+    e.preventDefault(); setLoading(true); setError('')
+    const { error } = await supabase.auth.signUp({ email: form.email, password: form.password, options: { data: { full_name: form.name }, emailRedirectTo: window.location.origin + '/dashboard' } })
+    if (error) { setError(error.message); setLoading(false) } else { router.push('/dashboard') }
+  }
+
+  const inp = { width: '100%', padding: '12px 14px', borderRadius: 10, background: '#fff', border: '1px solid #E5E7EB', color: '#111827', fontFamily: 'inherit', fontSize: 14, outline: 'none' }
+
+  return (
+    <div style={{ background: '#FAFAFA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: '-apple-system,sans-serif' }}>
+      <div style={{ width: '100%', maxWidth: 380 }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 8 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: green, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>V</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>VellCare<span style={{ color: green }}>AI</span></div>
+          </div>
+          <div style={{ fontSize: 14, color: '#6B7280' }}>Create your health profile</div>
+        </div>
+        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <input style={inp} placeholder="Full name" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            <input style={inp} type="email" placeholder="Email address" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            <input style={inp} type="password" placeholder="Password (min 8 chars)" required minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+            {error && <div style={{ fontSize: 13, color: '#EF4444', background: '#FEF2F2', padding: '10px 14px', borderRadius: 8 }}>{error}</div>}
+            <button type="submit" disabled={loading} style={{ padding: 13, borderRadius: 12, background: green, border: 'none', color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: 'inherit', opacity: loading ? 0.7 : 1 }}>{loading ? 'Creating...' : 'Create Account'}</button>
+          </form>
+        </div>
+        <p style={{ textAlign: 'center', fontSize: 13, color: '#6B7280', marginTop: 16 }}>Already have an account? <Link href="/login" style={{ color: green, textDecoration: 'none', fontWeight: 500 }}>Sign in</Link></p>
+      </div>
+    </div>
+  )
+}
+`);
+
+// Update login page
+write('app/login/page.tsx', `'use client'
+import { useState } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+
+const green = '#10B981'
+
+export default function Login() {
+  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  const router = useRouter()
+  const [form, setForm] = useState({ email: '', password: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handle(e: React.FormEvent) {
+    e.preventDefault(); setLoading(true); setError('')
+    const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
+    if (error) { setError(error.message); setLoading(false) } else { router.push('/dashboard'); router.refresh() }
+  }
+
+  const inp = { width: '100%', padding: '12px 14px', borderRadius: 10, background: '#fff', border: '1px solid #E5E7EB', color: '#111827', fontFamily: 'inherit', fontSize: 14, outline: 'none' }
+
+  return (
+    <div style={{ background: '#FAFAFA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: '-apple-system,sans-serif' }}>
+      <div style={{ width: '100%', maxWidth: 380 }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 8 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: green, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>V</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>VellCare<span style={{ color: green }}>AI</span></div>
+          </div>
+          <div style={{ fontSize: 14, color: '#6B7280' }}>Welcome back</div>
+        </div>
+        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <input style={inp} type="email" placeholder="Email address" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            <input style={inp} type="password" placeholder="Password" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+            {error && <div style={{ fontSize: 13, color: '#EF4444', background: '#FEF2F2', padding: '10px 14px', borderRadius: 8 }}>{error}</div>}
+            <button type="submit" disabled={loading} style={{ padding: 13, borderRadius: 12, background: green, border: 'none', color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: 'inherit', opacity: loading ? 0.7 : 1 }}>{loading ? 'Signing in...' : 'Sign In'}</button>
+          </form>
+        </div>
+        <p style={{ textAlign: 'center', fontSize: 13, color: '#6B7280', marginTop: 16 }}>No account? <Link href="/signup" style={{ color: green, textDecoration: 'none', fontWeight: 500 }}>Sign up free</Link></p>
+      </div>
+    </div>
+  )
+}
+`);
+
+console.log('\nAll done! Now run:');
+console.log('git add .');
+console.log('git commit -m "rebrand to VellCareAI white green design"');
+console.log('git push');
