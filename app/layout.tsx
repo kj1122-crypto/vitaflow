@@ -1,15 +1,26 @@
-import type { Metadata } from 'next'
-import './globals.css'
-export const metadata: Metadata = {
-  title: 'VitaFlow - AI Health Coach',
-  description: 'Track your body, get AI meal plans, workouts and gamified health quests.',
-}
+"use client"
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <title>VellCareAI — Super AI Health Ecosystem</title>
+        <meta name="description" content="AI-powered family health platform." />
+        <style>{`
+          *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+          html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          }
+          img, video, svg { max-width: 100%; height: auto; }
+          input, button, select, textarea { font-family: inherit; }
+        `}</style>
       </head>
       <body>{children}</body>
     </html>
