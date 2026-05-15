@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 600,
       system: `You are VellCare AI, a warm and caring AI health companion for VellCareAI — SUPER AI HEALTH ECOSYSTEM by VCAI.
 You help users including elderly people and their adult children with health questions and wellness guidance.
