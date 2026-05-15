@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-})
 
 interface Msg {
   role: "user" | "assistant"
@@ -12,66 +7,73 @@ interface Msg {
 
 export async function POST(req: NextRequest) {
   try {
-    // Check API key exists
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json(
-        { error: "Anthropic API key not configured", reply: "AI Coach is not configured yet. Please contact support." },
-        { status: 500 }
-      )
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({
+        reply: "AI Coach is not configured. Please contact support."
+      }, { status: 500 })
     }
 
-    const { messages } = await req.json()
+    const body = await req.json()
+    const messages: Msg[] = body.messages || []
 
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { error: "Invalid messages format", reply: "Please try again." },
-        { status: 400 }
-      )
+    if (messages.length === 0) {
+      return NextResponse.json({ reply: "Please send a message." }, { status: 400 })
     }
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 600,
-      system: `You are VellCare AI, a warm and caring AI health companion for VellCareAI — SUPER AI HEALTH ECOSYSTEM by VCAI.
-You help users including elderly people and their adult children with health questions and wellness guidance.
-Always speak in simple, warm, encouraging language. Never use complex medical jargon.
-Keep responses concise — under 100 words — and easy to understand for all ages including elderly users.
-If someone feels seriously unwell always suggest they rest, drink water, and if serious, contact their family or a doctor immediately.
-Give practical, caring, personalised health advice. You represent VellCareAI and care deeply about every user.`,
-      messages: messages.map((m: Msg) => ({
-        role: m.role,
-        content: m.content
-      }))
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 600,
+        system: `You are VellCare AI, a warm and caring personal health coach for VellCareAI — SUPER AI HEALTH ECOSYSTEM by VCAI.
+
+RESPONSE FORMAT RULES — follow these exactly:
+- Write in plain conversational sentences only
+- NO markdown formatting — no asterisks, no bold, no bullet points with dashes
+- NO emojis unless the user uses them first
+- Separate each idea into its own short sentence or short paragraph
+- Maximum 3 to 4 short paragraphs per response
+- Each paragraph should be 1 to 2 sentences only
+- Keep total response under 80 words
+- Use warm encouraging language suitable for all ages including elderly
+
+EXAMPLE of correct format:
+"Your heart rate looks healthy at 72 BPM today. For fat loss I recommend grilled chicken or fish with steamed vegetables. Try to eat smaller portions more often and avoid fried foods. Would you like a full day meal plan?"
+
+NEVER write like this:
+"Here are some tips: **Grilled chicken** - steamed vegetables - brown rice 🥗"
+
+Always write naturally like a caring friend, not a list maker.`,
+        messages: messages.map((m: Msg) => ({
+          role: m.role,
+          content: m.content
+        }))
+      })
     })
 
-    const reply = response.content[0].type === "text"
-      ? response.content[0].text
-      : "I am here to help. Please try again."
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error("Anthropic API error:", response.status, errorText)
+      return NextResponse.json({
+        reply: "AI Coach is temporarily unavailable. Please try again in a moment."
+      }, { status: 500 })
+    }
+
+    const data = await response.json()
+    const reply = data?.content?.[0]?.text || "I am here to help. Please try again."
 
     return NextResponse.json({ reply })
 
   } catch (error: unknown) {
-    console.error("AI API error:", error)
-
-    // Give helpful error messages
-    if (error instanceof Error) {
-      if (error.message.includes("API key")) {
-        return NextResponse.json(
-          { reply: "AI Coach is not configured. Please contact support.", error: error.message },
-          { status: 500 }
-        )
-      }
-      if (error.message.includes("rate limit")) {
-        return NextResponse.json(
-          { reply: "AI Coach is busy right now. Please try again in a moment.", error: error.message },
-          { status: 429 }
-        )
-      }
-    }
-
-    return NextResponse.json(
-      { reply: "Something went wrong. Please try again.", error: "Unknown error" },
-      { status: 500 }
-    )
+    console.error("AI route error:", error)
+    return NextResponse.json({
+      reply: "Connection error. Please check your internet and try again."
+    }, { status: 500 })
   }
 }
