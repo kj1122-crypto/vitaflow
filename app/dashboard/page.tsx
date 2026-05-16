@@ -551,7 +551,7 @@ function PlansTab({ plan }: { plan: string }) {
         {["Private 1-on-1 health coach", "Blood test AI analysis", "VellCare Watch gifted", "VIP health events", "24/7 concierge hotline", "Family plan 10 members"].map(f => (
           <div key={f} style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 7, display: "flex", gap: 8 }}><span style={{ color: G, fontWeight: 700 }}>✓</span>{f}</div>
         ))}
-        <a href="mailto:hello@vellcareai.com?subject=Platinum Elite Enquiry" style={{ display: "block", width: "100%", padding: 14, borderRadius: 12, background: `linear-gradient(135deg,${G},#059669)`, border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginTop: 14, textAlign: "center", textDecoration: "none" }}>
+        <a href="mailto:support@vellcareai.com?subject=Platinum Elite Enquiry" style={{ display: "block", width: "100%", padding: 14, borderRadius: 12, background: `linear-gradient(135deg,${G},#059669)`, border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginTop: 14, textAlign: "center", textDecoration: "none" }}>
           Apply for Platinum Elite
         </a>
       </div>
