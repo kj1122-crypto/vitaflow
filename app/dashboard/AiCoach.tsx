@@ -153,29 +153,6 @@ export default function AiCoach({ name }: AiCoachProps) {
 
   return (
     <div>
-      {/* AI HEADER */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 12,
-        marginBottom: 16, padding: 14,
-        background: GL, borderRadius: 14, border: `1px solid ${GB}`
-      }}>
-        <div style={{
-          width: 44, height: 44, borderRadius: 12,
-          background: G, display: "flex", alignItems: "center",
-          justifyContent: "center", color: "#fff",
-          fontWeight: 700, fontSize: 14, flexShrink: 0
-        }}>AI</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: GD }}>VellCare AI Coach</div>
-          <div style={{ fontSize: 11, color: G, marginTop: 2 }}>Powered by Claude · Your personal health guardian</div>
-        </div>
-        <div style={{
-          background: G, borderRadius: 20,
-          padding: "3px 10px", fontSize: 10,
-          color: "#fff", fontWeight: 700
-        }}>LIVE</div>
-      </div>
-
       {/* QUICK CHIPS */}
       <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 6, marginBottom: 14 }}>
         {chips.map(q => (
