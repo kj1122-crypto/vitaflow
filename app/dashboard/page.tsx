@@ -1,215 +1,111 @@
 "use client"
+import SettingsTab from "./SettingsTab"
+import AiCoach from "./AiCoach"
 import { useState, useEffect, useRef } from "react"
 import { createBrowserClient } from "@supabase/ssr"
 import { useRouter } from "next/navigation"
-import AiCoach from "./AiCoach"
-import HealthLogModal from "./HealthLogModal"
-import type { HealthEntry } from "./HealthLogModal"
 
 const G = "#10B981", GL = "#D1FAE5", GB = "#6EE7B7", GD = "#065F46"
 const RED = "#EF4444", BLUE = "#2196F3", PURPLE = "#7C4DFF", GOLD = "#F59E0B"
 
-const card: React.CSSProperties = {
-  background: "#fff", border: "1px solid #E5E7EB",
-  borderRadius: 14, padding: 16, marginBottom: 12,
-  boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
-}
+const card: React.CSSProperties = { background: "#fff", border: "1px solid #E5E7EB", borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }
 const cardGreen: React.CSSProperties = { ...card, background: GL, border: `1px solid ${GB}` }
 
-// ── WELLSCORE STATUS ─────────────────────────────────────────
-function getStatus(score: number) {
-  if (score >= 75) return { label: "Good", color: G, bg: GL, border: GB }
-  if (score >= 50) return { label: "Monitor", color: GOLD, bg: "#FFFBEB", border: "#FCD34D" }
-  return { label: "Warning", color: RED, bg: "#FEF2F2", border: "#FCA5A5" }
-}
+// ── AI COACH ─────────────────────────────────────────────────
+
 
 // ── FAMILY TAB ───────────────────────────────────────────────
-function FamilyTab({ userId }: { userId: string }) {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  const [family, setFamily] = useState<any[]>([])
+function FamilyTab() {
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [inviteLink, setInviteLink] = useState("")
-  const [copied, setCopied] = useState(false)
-
-  useEffect(() => {
-    loadFamily()
-    generateInviteLink()
-  }, [])
-
-  async function loadFamily() {
-    const { data } = await supabase
-      .from("family_health_view")
-      .select("*")
-      .eq("user_id", userId)
-    setFamily(data || [])
-    setLoading(false)
-  }
-
-  async function generateInviteLink() {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("referral_code")
-      .eq("id", userId)
-      .single()
-    if (profile?.referral_code) {
-      setInviteLink(`https://vellcareai.com/signup?family=${profile.referral_code}`)
-    }
-  }
-
-  function copyInvite() {
-    navigator.clipboard.writeText(inviteLink).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  if (loading) return (
-    <div style={{ textAlign: "center", padding: 40, color: "#9CA3AF" }}>Loading family data...</div>
-  )
-
+  const members = [
+    { id: "m1", name: "Mum — Wong Mei Ling", age: 68, score: 82, status: "Good", c: G, bg: GL, bdr: GB, bpm: 72, steps: 3200, sleep: 7.2, alert: false },
+    { id: "m2", name: "Dad — Wong Ah Kow", age: 71, score: 71, status: "Monitor", c: GOLD, bg: "#FFFBEB", bdr: "#FCD34D", bpm: 88, steps: 1800, sleep: 5.8, alert: false },
+    { id: "m3", name: "Grandma — Lim Ah Moi", age: 82, score: 58, status: "Warning", c: RED, bg: "#FEF2F2", bdr: "#FCA5A5", bpm: 98, steps: 620, sleep: 4.5, alert: true },
+  ]
   return (
     <div>
       <div style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 16 }}>Family Health</div>
-
-      {/* ALERT for Warning members */}
-      {family.filter(m => getStatus(m.well_score || 0).label === "Warning").map(m => (
-        <div key={m.member_id} style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 12, padding: "12px 16px", marginBottom: 14 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: RED, marginBottom: 3 }}>⚠ Alert — {m.full_name} needs attention</div>
-          <div style={{ fontSize: 12, color: "#991B1B", marginBottom: 8, lineHeight: 1.6 }}>
-            WellScore is {m.well_score || 0} — health needs monitoring.
-            {m.heart_rate && m.heart_rate > 90 ? ` Heart rate elevated at ${m.heart_rate} BPM.` : ""}
-          </div>
+      {members.find(m => m.alert) && (
+        <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 12, padding: "12px 16px", marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: RED, marginBottom: 3 }}>⚠ Alert — Grandma needs attention</div>
+          <div style={{ fontSize: 12, color: "#991B1B", marginBottom: 8, lineHeight: 1.6 }}>Heart rate elevated at 98 BPM for 20 minutes. Sleep only 4.5 hours last night.</div>
           <button style={{ padding: "6px 14px", borderRadius: 8, background: RED, border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>📞 Call Now</button>
         </div>
-      ))}
-
-      {/* FAMILY MEMBERS */}
-      {family.length > 0 ? (
-        <div style={card}>
-          {family.map((m, idx) => {
-            const status = getStatus(m.well_score || 0)
-            const lastUpdated = m.health_updated_at
-              ? new Date(m.health_updated_at).toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })
-              : "No data yet"
-            return (
-              <div key={m.member_id}>
-                <div onClick={() => setExpanded(expanded === m.member_id ? null : m.member_id)}
-                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 0", borderBottom: idx < family.length - 1 ? "1px solid #F9FAFB" : "none", cursor: "pointer" }}>
-                  <div style={{ width: 46, height: 46, borderRadius: "50%", background: status.bg, border: `2px solid ${status.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 17, color: status.color, flexShrink: 0 }}>
-                    {m.well_score || "—"}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{m.full_name}</div>
-                    <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
-                      {m.age ? `Age ${m.age} · ` : ""}Updated {lastUpdated}
-                    </div>
-                  </div>
-                  <div style={{ padding: "4px 12px", borderRadius: 20, background: status.bg, color: status.color, fontSize: 12, fontWeight: 600, border: `1px solid ${status.border}` }}>
-                    {status.label}
-                  </div>
-                </div>
-                {expanded === m.member_id && (
-                  <div style={{ paddingBottom: 12, paddingTop: 8 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
-                      {[
-                        { l: "Heart Rate", v: m.heart_rate ? `${m.heart_rate} BPM` : "—", c: RED, bg: "#FEF2F2" },
-                        { l: "Steps Today", v: m.steps ? m.steps.toLocaleString() : "—", c: BLUE, bg: "#EFF6FF" },
-                        { l: "Sleep", v: m.sleep_hours ? `${m.sleep_hours}h` : "—", c: PURPLE, bg: "#F5F3FF" }
-                      ].map(mt => (
-                        <div key={mt.l} style={{ background: mt.bg, borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
-                          <div style={{ fontSize: 15, fontWeight: 700, color: mt.c }}>{mt.v}</div>
-                          <div style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>{mt.l}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {["📞 Call", "💬 Message", "📊 History"].map(a => (
-                        <button key={a} style={{ flex: 1, padding: 9, borderRadius: 9, background: a.includes("Call") ? G : a.includes("Message") ? GL : "#F9FAFB", border: a.includes("Message") ? `1px solid ${GB}` : "1px solid #E5E7EB", color: a.includes("Call") ? "#fff" : a.includes("Message") ? GD : "#374151", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{a}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+      )}
+      <div style={card}>
+        {members.map((p, idx) => (
+          <div key={p.id}>
+            <div onClick={() => setExpanded(expanded === p.id ? null : p.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 0", borderBottom: idx < members.length - 1 ? "1px solid #F9FAFB" : "none", cursor: "pointer" }}>
+              <div style={{ width: 46, height: 46, borderRadius: "50%", background: p.bg, border: `2px solid ${p.c}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 17, color: p.c, flexShrink: 0 }}>{p.score}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{p.name}</div>
+                <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>Age {p.age} · Updated 2 min ago</div>
               </div>
-            )
-          })}
-        </div>
-      ) : (
-        /* EMPTY STATE */
-        <div style={{ ...card, textAlign: "center", padding: "40px 24px" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>👨‍👩‍👧</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#111827", marginBottom: 8 }}>No family connected yet</div>
-          <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 24, lineHeight: 1.6, maxWidth: 280, margin: "0 auto 24px" }}>
-            Invite your parents, grandparents or spouse to join your family health circle.
+              <div style={{ padding: "4px 12px", borderRadius: 20, background: p.bg, color: p.c, fontSize: 12, fontWeight: 600, border: `1px solid ${p.bdr}` }}>{p.status}</div>
+            </div>
+            {expanded === p.id && (
+              <div style={{ paddingBottom: 12, paddingTop: 8 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
+                  {[{ l: "Heart Rate", v: `${p.bpm} BPM`, c: RED, bg: "#FEF2F2" }, { l: "Steps Today", v: p.steps.toLocaleString(), c: BLUE, bg: "#EFF6FF" }, { l: "Sleep", v: `${p.sleep}h`, c: PURPLE, bg: "#F5F3FF" }].map(m => (
+                    <div key={m.l} style={{ background: m.bg, borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: m.c }}>{m.v}</div>
+                      <div style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>{m.l}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {["📞 Call", "💬 Message", "📊 History"].map(a => (
+                    <button key={a} style={{ flex: 1, padding: 9, borderRadius: 9, background: a.includes("Call") ? G : a.includes("Message") ? GL : "#F9FAFB", border: a.includes("Message") ? `1px solid ${GB}` : "1px solid #E5E7EB", color: a.includes("Call") ? "#fff" : a.includes("Message") ? GD : "#374151", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{a}</button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <div style={{ background: "#F9FAFB", borderRadius: 10, padding: "10px 14px", border: "1px solid #E5E7EB", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ flex: 1, fontSize: 12, color: "#6B7280", fontFamily: "monospace", wordBreak: "break-all" as const }}>{inviteLink || "Generating your invite link..."}</span>
-          </div>
-          <button onClick={copyInvite} style={{ width: "100%", padding: 12, borderRadius: 12, background: G, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-            {copied ? "✓ Link Copied!" : "📋 Copy Invite Link"}
-          </button>
-          <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 10 }}>Share this link with your family members so they can join</div>
+        ))}
+      </div>
+      <div style={{ background: GD, borderRadius: 14, padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 3 }}>Add family member</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Invite parents to join your health circle</div>
         </div>
-      )}
-
-      {/* INVITE SECTION — always show if has family */}
-      {family.length > 0 && (
-        <div style={{ background: GD, borderRadius: 14, padding: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 8 }}>Add more family members</div>
-          <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 12px", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ flex: 1, fontSize: 11, color: "rgba(255,255,255,0.7)", fontFamily: "monospace", wordBreak: "break-all" as const }}>{inviteLink}</span>
-          </div>
-          <button onClick={copyInvite} style={{ width: "100%", padding: 10, borderRadius: 10, background: "#fff", border: "none", color: GD, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-            {copied ? "✓ Copied!" : "📋 Copy Invite Link"}
-          </button>
-        </div>
-      )}
+        <button style={{ padding: "8px 16px", borderRadius: 9, background: "#fff", border: "none", color: GD, fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>Invite</button>
+      </div>
     </div>
   )
 }
 
 // ── DEVICES TAB ──────────────────────────────────────────────
 function DevicesTab() {
-  const [connected, setConnected] = useState(["Manual Input"])
+  const [connected, setConnected] = useState(["Apple Health", "Samsung Health"])
   const devices = [
-    { name: "Apple Health", desc: "iPhone and Apple Watch sync", icon: "🍎", comingSoon: true },
-    { name: "Samsung Health", desc: "Galaxy Watch and Samsung phone", icon: "📱", comingSoon: true },
-    { name: "Google Fit", desc: "Android health data", icon: "🔵", comingSoon: true },
-    { name: "Garmin", desc: "All Garmin wearables", icon: "⌚", comingSoon: true },
-    { name: "Fitbit", desc: "All Fitbit devices", icon: "💪", comingSoon: true },
-    { name: "Huawei Health", desc: "Huawei Band and Watch", icon: "📲", comingSoon: true },
-    { name: "Whoop", desc: "Whoop band", icon: "⚡", comingSoon: true },
-    { name: "Oura Ring", desc: "Oura smart ring", icon: "💍", comingSoon: true },
-    { name: "Manual Input", desc: "Enter health data manually", icon: "✍️", comingSoon: false },
+    { name: "Apple Health", desc: "iPhone and Apple Watch sync", icon: "🍎" },
+    { name: "Samsung Health", desc: "Galaxy Watch and Samsung phone", icon: "📱" },
+    { name: "Google Fit", desc: "Android health data", icon: "🔵" },
+    { name: "Garmin", desc: "All Garmin wearables", icon: "⌚" },
+    { name: "Fitbit", desc: "All Fitbit devices", icon: "💪" },
+    { name: "Huawei Health", desc: "Huawei Band and Watch", icon: "📲" },
+    { name: "Whoop", desc: "Whoop band", icon: "⚡" },
+    { name: "Oura Ring", desc: "Oura smart ring", icon: "💍" },
+    { name: "Manual Input", desc: "Enter health data manually", icon: "✍️" },
   ]
-
+  const toggle = (name: string) => setConnected(c => c.includes(name) ? c.filter(x => x !== name) : [...c, name])
   return (
     <div>
       <div style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 6 }}>Connect Devices</div>
-      <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 14 }}>Link your health apps and wearables to sync data automatically</div>
-
-      <div style={{ background: "#FFFBEB", border: "1px solid #FCD34D", borderRadius: 12, padding: "12px 16px", marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#92400E", marginBottom: 4 }}>📱 Device sync coming soon</div>
-        <div style={{ fontSize: 12, color: "#92400E", lineHeight: 1.6 }}>Automatic device sync requires our mobile app. Download from Google Play Store when available. For now use Manual Input to log your health data.</div>
-      </div>
-
+      <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 20 }}>Link your health apps and wearables to sync data automatically</div>
       <div style={card}>
         {devices.map((d, i) => {
           const isConn = connected.includes(d.name)
           return (
-            <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 0", borderBottom: i < devices.length - 1 ? "1px solid #F9FAFB" : "none", opacity: d.comingSoon ? 0.6 : 1 }}>
+            <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 0", borderBottom: i < devices.length - 1 ? "1px solid #F9FAFB" : "none" }}>
               <div style={{ width: 40, height: 40, borderRadius: 10, background: isConn ? GL : "#F3F4F6", border: isConn ? `1px solid ${GB}` : "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{d.icon}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{d.name}</div>
-                <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>{d.comingSoon ? "Coming soon with mobile app" : d.desc}</div>
+                <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>{d.desc}</div>
               </div>
-              {d.comingSoon ? (
-                <div style={{ padding: "5px 10px", borderRadius: 8, background: "#F3F4F6", color: "#9CA3AF", fontSize: 11, fontWeight: 600 }}>Soon</div>
-              ) : (
-                <div style={{ padding: "5px 10px", borderRadius: 8, background: GL, border: `1px solid ${GB}`, color: GD, fontSize: 11, fontWeight: 600 }}>Active</div>
-              )}
+              <button onClick={() => toggle(d.name)} style={{ padding: "6px 14px", borderRadius: 8, background: isConn ? "#FEF2F2" : GL, border: isConn ? "1px solid #FCA5A5" : `1px solid ${GB}`, color: isConn ? RED : GD, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                {isConn ? "Disconnect" : "Connect"}
+              </button>
             </div>
           )
         })}
@@ -219,94 +115,18 @@ function DevicesTab() {
 }
 
 // ── COMMUNITY TAB ────────────────────────────────────────────
-function CommunityTab({ userId, userSteps }: { userId: string; userSteps: number }) {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  const [leaders, setLeaders] = useState<any[]>([])
-  const [referralCode, setReferralCode] = useState("")
-  const [referralCount, setReferralCount] = useState(0)
-  const [streak, setStreak] = useState(0)
+function CommunityTab() {
   const [copied, setCopied] = useState(false)
   const [checkedIn, setCheckedIn] = useState(false)
-  const [loading, setLoading] = useState(true)
-
-  const STEPS_GOAL = 5000
-  const REF_GOAL = 10
-  const STREAK_GOAL = 7
-
-  useEffect(() => {
-    loadData()
-  }, [userSteps])
-
-  async function loadData() {
-    // Load leaderboard
-    const { data: lb } = await supabase
-      .from("community_leaderboard")
-      .select("*")
-      .limit(10)
-    setLeaders(lb || [])
-
-    // Load profile for referral code and streak
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("referral_code, checkin_streak, last_checkin")
-      .eq("id", userId)
-      .single()
-
-    if (profile) {
-      setReferralCode(profile.referral_code || "")
-      setStreak(profile.checkin_streak || 0)
-      // Check if already checked in today
-      const today = new Date().toISOString().split("T")[0]
-      if (profile.last_checkin === today) setCheckedIn(true)
-    }
-
-    // Load referral count
-    const { data: refs } = await supabase
-      .from("referrals")
-      .select("id")
-      .eq("referrer_id", userId)
-      .eq("status", "active")
-    setReferralCount(refs?.length || 0)
-
-    setLoading(false)
-  }
-
-  async function handleCheckin() {
-    const today = new Date().toISOString().split("T")[0]
-    const newStreak = streak + 1
-
-    await supabase.from("profiles").update({
-      checkin_streak: newStreak,
-      last_checkin: today,
-      updated_at: new Date().toISOString()
-    }).eq("id", userId)
-
-    await supabase.from("checkins").upsert({
-      user_id: userId,
-      checkin_date: today,
-      steps: userSteps
-    })
-
-    setStreak(newStreak)
-    setCheckedIn(true)
-  }
-
-  function copyLink() {
-    const link = `https://vellcareai.com/signup?ref=${referralCode}`
-    navigator.clipboard.writeText(link).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
+  const REF = 4, STREAK = 5, STEPS = 3240
+  const REF_GOAL = 10, STREAK_GOAL = 7, STEPS_GOAL = 5000
   const pct = (v: number, g: number) => Math.min(Math.round(v / g * 100), 100)
-  const totalPct = Math.round(((referralCount >= REF_GOAL ? 1 : 0) + (streak >= STREAK_GOAL ? 1 : 0) + (userSteps >= STEPS_GOAL ? 1 : 0)) / 3 * 100)
-
-  // Find user's position in leaderboard
-  const userRank = leaders.findIndex(l => l.id === userId) + 1
-
+  const leaders = [
+    { rank: 1, name: "FitKing_Razif", steps: 12840, prize: "RM 50 Grab", c: GOLD },
+    { rank: 2, name: "HealthQueenSiti", steps: 10220, prize: "RM 30 TnG", c: "#9CA3AF" },
+    { rank: 3, name: "RunnerJosh_KL", steps: 9870, prize: "RM 20 McDs", c: "#CD7F32" },
+    { rank: 4, name: "You", steps: STEPS, prize: "", c: G },
+  ]
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: 18 }}>
@@ -324,9 +144,8 @@ function CommunityTab({ userId, userSteps }: { userId: string; userSteps: number
           </div>
           <div style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 20, padding: "4px 10px", fontSize: 10, color: G, fontWeight: 700 }}>LIVE</div>
         </div>
-
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
-          {[{ pos: "1st", prize: "RM 50", sub: "Grab", c: GOLD }, { pos: "2nd", prize: "RM 30", sub: "TnG", c: "#9CA3AF" }, { pos: "3rd", prize: "RM 20", sub: "McDs", c: "#CD7F32" }].map(p => (
+          {[{ pos: "1st", prize: "RM 50", sub: "Grab", c: GOLD }, { pos: "2nd", prize: "RM 30", sub: "Touch n Go", c: "#9CA3AF" }, { pos: "3rd", prize: "RM 20", sub: "McDonalds", c: "#CD7F32" }].map(p => (
             <div key={p.pos} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "10px 8px", textAlign: "center", border: "1px solid rgba(255,255,255,0.06)" }}>
               <div style={{ fontSize: 11, color: p.c, fontWeight: 700, marginBottom: 3 }}>{p.pos}</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: p.c }}>{p.prize}</div>
@@ -334,116 +153,83 @@ function CommunityTab({ userId, userSteps }: { userId: string; userSteps: number
             </div>
           ))}
         </div>
-
-        {loading ? (
-          <div style={{ textAlign: "center", color: "#555", fontSize: 13, padding: 20 }}>Loading leaderboard...</div>
-        ) : leaders.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 20 }}>
-            <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>No entries yet today</div>
-            <div style={{ fontSize: 11, color: "#444" }}>Log your steps to appear on the leaderboard!</div>
+        {leaders.map(u => (
+          <div key={u.rank} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div style={{ width: 22, textAlign: "center", fontSize: 13, fontWeight: 700, color: u.rank <= 3 ? u.c : "#444" }}>{u.rank}</div>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: u.name === "You" ? G : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: u.name === "You" ? "#fff" : "#888" }}>{u.name.slice(0, 2)}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: u.name === "You" ? 700 : 500, color: u.name === "You" ? G : "#ccc" }}>{u.name}</div>
+              <div style={{ fontSize: 11, color: "#555" }}>{u.steps.toLocaleString()} steps</div>
+            </div>
+            {u.prize && <div style={{ fontSize: 11, color: u.c, fontWeight: 600 }}>{u.prize}</div>}
           </div>
-        ) : (
-          leaders.slice(0, 5).map((u, i) => {
-            const isUser = u.id === userId
-            const rankColors = [GOLD, "#9CA3AF", "#CD7F32"]
-            return (
-              <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <div style={{ width: 22, textAlign: "center", fontSize: 13, fontWeight: 700, color: i < 3 ? rankColors[i] : "#555" }}>{i + 1}</div>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: isUser ? G : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: isUser ? "#fff" : "#888" }}>
-                  {(u.full_name || "?").slice(0, 2).toUpperCase()}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: isUser ? 700 : 500, color: isUser ? G : "#ccc" }}>
-                    {isUser ? "You" : u.full_name?.split(" ")[0] || "User"}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#555" }}>{(u.steps_today || 0).toLocaleString()} steps</div>
-                </div>
-                {i < 3 && <div style={{ fontSize: 11, color: rankColors[i], fontWeight: 600 }}>{["RM 50", "RM 30", "RM 20"][i]}</div>}
-              </div>
-            )
-          })
-        )}
-
-        {userRank === 0 && userSteps > 0 && (
-          <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(16,185,129,0.08)", borderRadius: 8, fontSize: 12, color: G }}>
-            You are not on the leaderboard yet. Log your steps daily to appear!
-          </div>
-        )}
+        ))}
       </div>
 
-      {/* REFERRAL PROGRAM */}
+      {/* REFERRAL */}
       <div style={cardGreen}>
         <div style={{ fontSize: 15, fontWeight: 700, color: GD, marginBottom: 4 }}>Referral Reward Program</div>
         <div style={{ fontSize: 12, color: GD, marginBottom: 16, lineHeight: 1.6 }}>Complete all 3 missions to earn a <strong>RM 50 Aeon or KFC voucher</strong>!</div>
 
-        {/* MISSION 1 */}
+        {/* M1 */}
         <div style={{ background: "#fff", borderRadius: 12, padding: 12, marginBottom: 10, border: `1px solid ${GB}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
             <div style={{ fontSize: 13, fontWeight: 600 }}>Mission 1 — Invite 10 Friends</div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: referralCount >= REF_GOAL ? G : GOLD }}>{referralCount}/{REF_GOAL}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: GOLD }}>{REF}/{REF_GOAL}</div>
           </div>
           <div style={{ height: 5, background: "#F3F4F6", borderRadius: 3, overflow: "hidden", marginBottom: 8 }}>
-            <div style={{ height: "100%", background: referralCount >= REF_GOAL ? G : GOLD, width: pct(referralCount, REF_GOAL) + "%", borderRadius: 3, transition: "width 0.5s" }} />
+            <div style={{ height: "100%", background: GOLD, width: pct(REF, REF_GOAL) + "%", borderRadius: 3 }} />
           </div>
-          <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 8 }}>Friend must be active for 7 days before referral counts</div>
-          <div onClick={copyLink} style={{ display: "flex", alignItems: "center", gap: 8, background: "#F9FAFB", borderRadius: 8, padding: "8px 10px", border: "1px solid #E5E7EB", cursor: "pointer", marginBottom: 8 }}>
-            <span style={{ flex: 1, fontSize: 11, color: "#6B7280", fontFamily: "monospace", wordBreak: "break-all" as const }}>
-              vellcareai.com/signup?ref={referralCode || "loading..."}
-            </span>
-            <span style={{ fontSize: 12, color: G, fontWeight: 700, flexShrink: 0 }}>{copied ? "Copied!" : "Copy"}</span>
+          <div onClick={() => { navigator.clipboard.writeText("https://vellcareai.health/ref/VCAIABCD").catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000) }} style={{ display: "flex", alignItems: "center", gap: 8, background: "#F9FAFB", borderRadius: 8, padding: "8px 10px", border: "1px solid #E5E7EB", cursor: "pointer", marginBottom: 8 }}>
+            <span style={{ flex: 1, fontSize: 12, color: "#6B7280", fontFamily: "monospace" }}>vellcareai.health/ref/VCAIABCD</span>
+            <span style={{ fontSize: 12, color: G, fontWeight: 700 }}>{copied ? "Copied!" : "Copy"}</span>
           </div>
           <div style={{ display: "flex", gap: 3 }}>
             {Array.from({ length: 10 }, (_, i) => (
-              <div key={i} style={{ flex: 1, height: 18, borderRadius: 4, background: i < referralCount ? G : "#E5E7EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: i < referralCount ? "#fff" : "#9CA3AF", fontWeight: 700 }}>
-                {i < referralCount ? "✓" : String(i + 1)}
+              <div key={i} style={{ flex: 1, height: 18, borderRadius: 4, background: i < REF ? G : "#E5E7EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: i < REF ? "#fff" : "#9CA3AF", fontWeight: 700 }}>
+                {i < REF ? "✓" : String(i + 1)}
               </div>
             ))}
           </div>
         </div>
 
-        {/* MISSION 2 */}
+        {/* M2 */}
         <div style={{ background: "#fff", borderRadius: 12, padding: 12, marginBottom: 10, border: `1px solid ${GB}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
             <div style={{ fontSize: 13, fontWeight: 600 }}>Mission 2 — 7-Day Check-In</div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: streak >= STREAK_GOAL ? G : GOLD }}>{streak}/{STREAK_GOAL} days</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: GOLD }}>{STREAK}/{STREAK_GOAL} days</div>
           </div>
           <div style={{ height: 5, background: "#F3F4F6", borderRadius: 3, overflow: "hidden", marginBottom: 10 }}>
-            <div style={{ height: "100%", background: streak >= STREAK_GOAL ? G : GOLD, width: pct(streak, STREAK_GOAL) + "%", borderRadius: 3 }} />
+            <div style={{ height: "100%", background: GOLD, width: pct(STREAK, STREAK_GOAL) + "%", borderRadius: 3 }} />
           </div>
-          <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
-            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+          <div style={{ display: "flex", gap: 4 }}>
+            {["M","T","W","T","F","S","S"].map((d, i) => (
               <div key={i} style={{ flex: 1, textAlign: "center" }}>
-                <div style={{ height: 26, borderRadius: 6, background: i < streak ? G : "#F3F4F6", marginBottom: 3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: i < streak ? "#fff" : "#9CA3AF", fontWeight: 600 }}>
-                  {i < streak ? "✓" : ""}
+                <div style={{ height: 26, borderRadius: 6, background: i < STREAK ? G : "#F3F4F6", marginBottom: 3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: i < STREAK ? "#fff" : "#9CA3AF", fontWeight: 600 }}>
+                  {i < STREAK ? "✓" : ""}
                 </div>
                 <div style={{ fontSize: 9, color: "#9CA3AF" }}>{d}</div>
               </div>
             ))}
           </div>
-          {!checkedIn ? (
-            <button onClick={handleCheckin} style={{ width: "100%", padding: 8, borderRadius: 8, background: G, border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-              Check In Today
-            </button>
-          ) : (
-            <div style={{ textAlign: "center", fontSize: 12, color: G, fontWeight: 700 }}>✓ Checked in today! Streak: {streak} days</div>
-          )}
+          {!checkedIn
+            ? <button onClick={() => setCheckedIn(true)} style={{ width: "100%", padding: 8, borderRadius: 8, background: G, border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 10 }}>Check In Today</button>
+            : <div style={{ marginTop: 8, fontSize: 12, color: G, fontWeight: 700, textAlign: "center" }}>✓ Checked in today!</div>
+          }
         </div>
 
-        {/* MISSION 3 */}
+        {/* M3 */}
         <div style={{ background: "#fff", borderRadius: 12, padding: 12, marginBottom: 14, border: `1px solid ${GB}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
             <div style={{ fontSize: 13, fontWeight: 600 }}>Mission 3 — Walk 5,000 Steps</div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: userSteps >= STEPS_GOAL ? G : GOLD }}>{userSteps.toLocaleString()}/{STEPS_GOAL.toLocaleString()}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: GOLD }}>{STEPS.toLocaleString()}/{STEPS_GOAL.toLocaleString()}</div>
           </div>
           <div style={{ height: 5, background: "#F3F4F6", borderRadius: 3, overflow: "hidden", marginBottom: 6 }}>
-            <div style={{ height: "100%", background: userSteps >= STEPS_GOAL ? G : GOLD, width: pct(userSteps, STEPS_GOAL) + "%", borderRadius: 3 }} />
+            <div style={{ height: "100%", background: GOLD, width: pct(STEPS, STEPS_GOAL) + "%", borderRadius: 3 }} />
           </div>
-          <div style={{ fontSize: 11, color: "#6B7280" }}>
-            {userSteps === 0 ? "Log your steps today using the Health tab" : `You have walked ${userSteps.toLocaleString()} steps today!`}
-          </div>
+          <div style={{ fontSize: 11, color: "#6B7280" }}>Synced automatically from your connected device</div>
         </div>
 
-        {/* REWARD */}
         <div style={{ background: GD, borderRadius: 12, padding: 14, textAlign: "center" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Complete all 3 to unlock</div>
           <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" as const, marginBottom: 8 }}>
@@ -451,7 +237,7 @@ function CommunityTab({ userId, userSteps }: { userId: string; userSteps: number
               <div key={r} style={{ padding: "4px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", fontSize: 11, color: "#6EE7B7" }}>{r}</div>
             ))}
           </div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Overall progress: {totalPct}% complete</div>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Overall progress: {Math.round(((REF >= REF_GOAL ? 1 : 0) + (STREAK >= STREAK_GOAL ? 1 : 0) + (STEPS >= STEPS_GOAL ? 1 : 0)) / 3 * 100)}% complete</div>
         </div>
       </div>
 
@@ -461,36 +247,27 @@ function CommunityTab({ userId, userSteps }: { userId: string; userSteps: number
         <div style={{ fontSize: 14, color: GD, lineHeight: 1.7, fontStyle: "italic" }}>"Every step you take today is an investment in your future self. A 10-minute walk now is worth more than any medicine later."</div>
         <div style={{ fontSize: 11, color: G, fontWeight: 600, marginTop: 8 }}>— VellCare AI Daily Motivation</div>
       </div>
+      <div style={{ textAlign: "center", padding: "10px 0" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", letterSpacing: 1.5, textTransform: "uppercase" as const }}>SUPER AI HEALTH ECOSYSTEM · VCAI</div>
+      </div>
     </div>
   )
 }
 
 // ── PLANS TAB ────────────────────────────────────────────────
-function PlansTab({ plan }: { plan: string }) {
-  async function subscribe(p: string) {
-    const res = await fetch("/api/stripe/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: p })
-    })
+function PlansTab() {
+  async function subscribe(plan: string) {
+    const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan }) })
     const { url } = await res.json()
     if (url) window.location.href = url
   }
-
   return (
     <div>
       <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: G, letterSpacing: 1.5, textTransform: "uppercase" as const, marginBottom: 4 }}>SUPER AI HEALTH ECOSYSTEM</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#111827" }}>VellCareAI Plans</div>
-        <div style={{ fontSize: 13, color: "#6B7280", marginTop: 4 }}>Simple pricing. Cancel anytime.</div>
+        <div style={{ fontSize: 13, color: "#6B7280", marginTop: 4 }}>Simple pricing. Real value. Cancel anytime.</div>
       </div>
-
-      {plan !== "free" && (
-        <div style={{ background: GL, border: `1px solid ${GB}`, borderRadius: 12, padding: "12px 16px", marginBottom: 16, textAlign: "center" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: GD }}>✓ You are on {plan.charAt(0).toUpperCase() + plan.slice(1)} plan</div>
-          <div style={{ fontSize: 12, color: G, marginTop: 4 }}>Thank you for supporting VellCareAI!</div>
-        </div>
-      )}
 
       <div style={card}>
         <div style={{ display: "inline-block", background: "#F3F4F6", color: "#6B7280", fontSize: 10, padding: "2px 8px", borderRadius: 20, marginBottom: 8, fontWeight: 700 }}>FREE FOREVER</div>
@@ -498,8 +275,8 @@ function PlansTab({ plan }: { plan: string }) {
           <div><div style={{ fontSize: 15, fontWeight: 700 }}>Starter</div><div style={{ fontSize: 11, color: "#9CA3AF" }}>No credit card needed</div></div>
           <div style={{ fontSize: 26, fontWeight: 700 }}>RM 0</div>
         </div>
-        {["3 AI Coach messages per day", "3 meal advice per day", "Manual health data logging", "WellScore dashboard", "SOS family alert button", "Basic community access"].map(f => (
-          <div key={f} style={{ fontSize: 12, color: "#6B7280", marginBottom: 6, display: "flex", gap: 8 }}><span style={{ color: G, fontWeight: 700 }}>✓</span>{f}</div>
+        {["Health data tracking — BPM, sleep, steps, calories","3 AI Coach messages per day","3 meal advice per day","WellScore dashboard","SOS family alert button","Apple Health and Samsung Health sync"].map(f => (
+          <div key={f} style={{ fontSize: 12, color: "#6B7280", marginBottom: 6, display: "flex", gap: 8, alignItems: "flex-start" }}><span style={{ color: G, flexShrink: 0, fontWeight: 700 }}>✓</span>{f}</div>
         ))}
       </div>
 
@@ -512,12 +289,10 @@ function PlansTab({ plan }: { plan: string }) {
           <div><div style={{ fontSize: 15, fontWeight: 700 }}>Pro Monthly</div><div style={{ fontSize: 11, color: "#9CA3AF" }}>Unlimited everything</div></div>
           <div style={{ textAlign: "right" as const }}><div style={{ fontSize: 24, fontWeight: 700 }}>RM 9.90</div><div style={{ fontSize: 11, color: "#9CA3AF" }}>USD 2.99/month</div></div>
         </div>
-        {["UNLIMITED AI Health Coach", "UNLIMITED meal planning", "Family monitoring dashboard", "SOS WhatsApp and SMS alerts", "Community challenges and prizes", "Referral reward program", "1 month health history"].map(f => (
-          <div key={f} style={{ fontSize: 12, color: "#374151", marginBottom: 6, display: "flex", gap: 8 }}><span style={{ color: G, fontWeight: 700 }}>✓</span>{f}</div>
+        {["UNLIMITED AI Health Coach","UNLIMITED meal planning and advice","Family monitoring dashboard","SOS WhatsApp and SMS alerts","Community challenges and prizes","Referral reward program","All 9 device integrations","1 month health history"].map(f => (
+          <div key={f} style={{ fontSize: 12, color: "#374151", marginBottom: 6, display: "flex", gap: 8, alignItems: "flex-start" }}><span style={{ color: G, flexShrink: 0, fontWeight: 700 }}>✓</span>{f}</div>
         ))}
-        <button onClick={() => subscribe("monthly")} style={{ width: "100%", padding: 12, borderRadius: 12, background: G, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 12 }}>
-          Start 7-Day Free Trial
-        </button>
+        <button onClick={() => subscribe("monthly")} style={{ width: "100%", padding: 12, borderRadius: 12, background: G, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 12 }}>Start 7-Day Free Trial</button>
       </div>
 
       <div style={{ ...card, border: "1.5px solid #2196F3" }}>
@@ -526,34 +301,32 @@ function PlansTab({ plan }: { plan: string }) {
           <div style={{ background: "#EAF3DE", color: "#3B6D11", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 700 }}>Save 58%</div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-          <div><div style={{ fontSize: 15, fontWeight: 700 }}>Pro Annual</div><div style={{ fontSize: 11, color: "#9CA3AF" }}>RM 99/year</div></div>
-          <div style={{ textAlign: "right" as const }}><div style={{ fontSize: 24, fontWeight: 700 }}>RM 8.25</div><div style={{ fontSize: 11, color: "#9CA3AF" }}>per month</div></div>
+          <div><div style={{ fontSize: 15, fontWeight: 700 }}>Pro Annual</div><div style={{ fontSize: 11, color: "#9CA3AF" }}>RM 99 billed once per year</div></div>
+          <div style={{ textAlign: "right" as const }}><div style={{ fontSize: 24, fontWeight: 700 }}>RM 8.25</div><div style={{ fontSize: 11, color: "#9CA3AF" }}>USD 2.08/mo · USD 29/yr</div></div>
         </div>
-        {["Everything in Pro Monthly", "VIP badge", "3 months history", "Gym discounts", "Early features"].map(f => (
-          <div key={f} style={{ fontSize: 12, color: "#374151", marginBottom: 6, display: "flex", gap: 8 }}><span style={{ color: BLUE, fontWeight: 700 }}>✓</span>{f}</div>
+        {["Everything in Pro Monthly","VIP community badge","Gym partner discounts","3 months health history","Early feature access"].map(f => (
+          <div key={f} style={{ fontSize: 12, color: "#374151", marginBottom: 6, display: "flex", gap: 8, alignItems: "flex-start" }}><span style={{ color: BLUE, flexShrink: 0, fontWeight: 700 }}>✓</span>{f}</div>
         ))}
-        <button onClick={() => subscribe("annual")} style={{ width: "100%", padding: 12, borderRadius: 12, background: BLUE, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 12 }}>
-          Start 7-Day Free Trial
-        </button>
+        <button onClick={() => subscribe("annual")} style={{ width: "100%", padding: 12, borderRadius: 12, background: BLUE, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 12 }}>Start 7-Day Free Trial</button>
       </div>
 
       <div style={{ background: "#0A0A0A", border: `1.5px solid ${G}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>
-        <div style={{ background: G, color: "#fff", fontSize: 10, padding: "2px 10px", borderRadius: 20, fontWeight: 700, display: "inline-block", marginBottom: 12 }}>PLATINUM ELITE</div>
+        <div style={{ background: G, color: "#fff", fontSize: 10, padding: "2px 10px", borderRadius: 20, fontWeight: 700, display: "inline-block", marginBottom: 12, letterSpacing: 0.5 }}>PLATINUM ELITE</div>
         <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 14 }}>Concierge Health Program</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
-          {[{ l: "Monthly", rm: "RM 299" }, { l: "Quarterly", rm: "RM 799" }, { l: "Annual", rm: "RM 2,499" }].map(p => (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
+          {[{ l: "Monthly", rm: "RM 299", usd: "USD 69" }, { l: "Quarterly", rm: "RM 799", usd: "USD 189" }, { l: "Annual", rm: "RM 2,499", usd: "USD 599" }].map(p => (
             <div key={p.l} style={{ background: "rgba(16,185,129,0.1)", borderRadius: 10, padding: "10px 8px", textAlign: "center", border: "1px solid rgba(16,185,129,0.2)" }}>
               <div style={{ fontSize: 10, color: "#6B7280", marginBottom: 3 }}>{p.l}</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: G }}>{p.rm}</div>
+              <div style={{ fontSize: 10, color: "#555" }}>{p.usd}</div>
             </div>
           ))}
         </div>
-        {["Private 1-on-1 health coach", "Blood test AI analysis", "VellCare Watch gifted", "VIP health events", "24/7 concierge hotline", "Family plan 10 members"].map(f => (
-          <div key={f} style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 7, display: "flex", gap: 8 }}><span style={{ color: G, fontWeight: 700 }}>✓</span>{f}</div>
+        {["Private 1-on-1 health coach monthly call","Monthly blood test AI analysis","Exclusive VellCare Watch gifted on annual signup","VIP health events access","Unlimited AI coaching 24/7","24/7 health concierge hotline","Annual comprehensive health report","Personal onboarding with health expert","Family plan up to 10 members"].map(f => (
+          <div key={f} style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 7, display: "flex", gap: 8, alignItems: "flex-start" }}><span style={{ color: G, flexShrink: 0, fontWeight: 700 }}>✓</span>{f}</div>
         ))}
-        <a href="mailto:support@vellcareai.com?subject=Platinum Elite Enquiry" style={{ display: "block", width: "100%", padding: 14, borderRadius: 12, background: `linear-gradient(135deg,${G},#059669)`, border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginTop: 14, textAlign: "center", textDecoration: "none" }}>
-          Apply for Platinum Elite
-        </a>
+        <button style={{ width: "100%", padding: 14, borderRadius: 12, background: `linear-gradient(135deg,${G},#059669)`, border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginTop: 14 }}>Apply for Platinum Elite</button>
+        <div style={{ textAlign: "center", fontSize: 10, color: "#555", marginTop: 8 }}>Limited spots available</div>
       </div>
     </div>
   )
@@ -566,72 +339,21 @@ export default function Dashboard() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
   const router = useRouter()
-  const [profile, setProfile] = useState<any>(null)
-  const [healthData, setHealthData] = useState<Partial<HealthEntry>>({})
+  const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
   const [tab, setTab] = useState("home")
-  const [sosOpen, setSosOpen] = useState(false)
-  const [logOpen, setLogOpen] = useState(false)
   const [checks, setChecks] = useState<Record<string, boolean>>({})
+  const [sosOpen, setSosOpen] = useState(false)
 
   useEffect(() => {
-    loadProfile()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push("/login"); return }
+      supabase.from("profiles").select("*").eq("id", user.id).single().then(({ data }) => {
+        setProfile(data ?? { full_name: "Member", level: 1, xp: 0, subscription_plan: "free" })
+      })
+    })
   }, [])
 
-  async function loadProfile() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push("/login"); return }
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single()
-
-    const profile = data || {
-      id: user.id,
-      full_name: user.email?.split("@")[0] || "Member",
-      subscription_plan: "free",
-      latest_well_score: 0,
-      latest_steps: 0
-    }
-
-    setProfile(profile)
-
-    // Load today's health data
-    const today = new Date().toISOString().split("T")[0]
-    const { data: hd } = await supabase
-      .from("health_data")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("date", today)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single()
-
-    if (hd) {
-      setHealthData({
-        steps: hd.steps,
-        heart_rate: hd.heart_rate,
-        sleep_hours: hd.sleep_hours,
-        weight: hd.weight,
-        spo2: hd.spo2,
-        calories: hd.calories,
-        water_glasses: hd.water_glasses,
-        stress_level: hd.stress_level,
-        well_score: profile.latest_well_score
-      })
-    }
-  }
-
-  function handleHealthSaved(data: HealthEntry) {
-    setHealthData(data)
-    setProfile((p: any) => ({ ...p, latest_well_score: data.well_score, latest_steps: data.steps }))
-  }
-
-  async function logout() {
-    await supabase.auth.signOut()
-    router.push("/")
-  }
+  async function logout() { await supabase.auth.signOut(); router.push("/") }
 
   if (!profile) return (
     <div style={{ background: "#fff", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -642,12 +364,7 @@ export default function Dashboard() {
     </div>
   )
 
-  const name = (profile.full_name || "Member").split(" ")[0]
-  const wellScore = healthData.well_score ?? profile.latest_well_score ?? 0
-  const steps = healthData.steps ?? profile.latest_steps ?? 0
-  const hasData = wellScore > 0 || steps > 0
-
-  const status = getStatus(wellScore)
+  const name = String(profile.full_name ?? "Member").split(" ")[0]
 
   const nb = (t: string): React.CSSProperties => ({
     flex: 1, padding: "9px 2px", background: "none", border: "none",
@@ -665,6 +382,7 @@ export default function Dashboard() {
     { id: "devices", icon: "⌚", label: "Devices" },
     { id: "community", icon: "🏆", label: "Community" },
     { id: "plans", icon: "💳", label: "Plans" },
+    { id: "settings", icon: "⚙️", label: "Settings" },
   ]
 
   return (
@@ -676,24 +394,16 @@ export default function Dashboard() {
           <div style={{ background: "#fff", borderRadius: 20, padding: 32, width: "100%", maxWidth: 380, textAlign: "center" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🆘</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: RED, marginBottom: 8 }}>SOS Alert Sent!</div>
-            <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 20, lineHeight: 1.6 }}>Your family members have been notified via WhatsApp and SMS.</div>
+            <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 20, lineHeight: 1.6 }}>All your family members have been notified via WhatsApp and SMS with your current location.</div>
             <div style={{ background: GL, border: `1px solid ${GB}`, borderRadius: 12, padding: 14, marginBottom: 20, textAlign: "left" as const }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: GD, marginBottom: 6 }}>Alerts sent to your family</div>
-              <div style={{ fontSize: 13, color: GD }}>All connected family members notified</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: GD, marginBottom: 6 }}>Alerts sent to</div>
+              <div style={{ fontSize: 13, color: GD }}>Mum — +60 12-345 6789</div>
+              <div style={{ fontSize: 13, color: GD, marginTop: 2 }}>Dad — +60 12-987 6543</div>
             </div>
             <button onClick={() => setSosOpen(false)} style={{ width: "100%", padding: 14, borderRadius: 12, background: G, border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>I am OK — Cancel Alert</button>
             <button onClick={() => setSosOpen(false)} style={{ width: "100%", padding: 10, borderRadius: 12, background: "none", border: "none", color: "#9CA3AF", fontSize: 13, cursor: "pointer" }}>Keep alert active</button>
           </div>
         </div>
-      )}
-
-      {/* HEALTH LOG MODAL */}
-      {logOpen && (
-        <HealthLogModal
-          userId={profile.id}
-          onSaved={handleHealthSaved}
-          onClose={() => setLogOpen(false)}
-        />
       )}
 
       <div style={{ maxWidth: 480, margin: "0 auto", paddingBottom: 80 }}>
@@ -724,94 +434,60 @@ export default function Dashboard() {
 
         <div style={{ padding: 16 }}>
 
-          {/* HOME TAB */}
+          {/* HOME */}
           {tab === "home" && (
             <div>
               <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 4 }}>{new Date().toDateString()}</div>
-              <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Good morning, <span style={{ color: G }}>{name}</span> 👋</div>
+              <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 18 }}>Good morning, <span style={{ color: G }}>{name}</span> 👋</div>
 
-              {/* NO DATA STATE */}
-              {!hasData && (
-                <div style={{ background: "#FFFBEB", border: "1px solid #FCD34D", borderRadius: 14, padding: 20, marginBottom: 16, textAlign: "center" }}>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>📋</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#92400E", marginBottom: 6 }}>Log your first health data!</div>
-                  <div style={{ fontSize: 13, color: "#92400E", marginBottom: 16, lineHeight: 1.6 }}>Enter your health information to see your personalised WellScore and get AI health insights.</div>
-                  <button onClick={() => setLogOpen(true)} style={{ padding: "12px 24px", borderRadius: 12, background: G, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                    Log Today Health Data +
-                  </button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                <div style={{ background: GL, border: `1px solid ${GB}`, borderRadius: 16, padding: "18px 14px", textAlign: "center" }}>
+                  <div style={{ fontSize: 9, color: G, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" as const, marginBottom: 6 }}>WellScore</div>
+                  <div style={{ fontSize: 52, fontWeight: 700, color: GD, lineHeight: 1 }}>82</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: G, marginTop: 6 }}>Good</div>
+                  <div style={{ fontSize: 11, color: "#6B7280", marginTop: 3 }}>Your health looks great!</div>
                 </div>
-              )}
-
-              {/* SCORE CARDS */}
-              {hasData && (
-                <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                    <div style={{ background: status.bg, border: `1px solid ${status.border}`, borderRadius: 16, padding: "18px 14px", textAlign: "center" }}>
-                      <div style={{ fontSize: 9, color: status.color, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" as const, marginBottom: 6 }}>WellScore</div>
-                      <div style={{ fontSize: 52, fontWeight: 700, color: status.color === G ? GD : status.color, lineHeight: 1 }}>{wellScore}</div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: status.color, marginTop: 6 }}>{status.label}</div>
-                      <div style={{ fontSize: 11, color: "#6B7280", marginTop: 3 }}>
-                        {status.label === "Good" ? "Your health looks great!" : status.label === "Monitor" ? "Keep an eye on your health" : "Please take care of yourself"}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      <div style={{ ...card, marginBottom: 0, textAlign: "center", padding: "12px 10px" }}>
-                        <div style={{ fontSize: 9, color: G, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" as const, marginBottom: 4 }}>Steps Today</div>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: BLUE }}>{steps.toLocaleString()}</div>
-                        <div style={{ fontSize: 11, color: "#6B7280" }}>of 5,000 goal</div>
-                      </div>
-                      <div style={{ ...card, marginBottom: 0, textAlign: "center", padding: "12px 10px" }}>
-                        <div style={{ fontSize: 9, color: RED, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" as const, marginBottom: 4 }}>Heart Rate</div>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: RED }}>{healthData.heart_rate || "—"}</div>
-                        <div style={{ fontSize: 11, color: "#6B7280" }}>BPM</div>
-                      </div>
-                    </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ ...card, marginBottom: 0, textAlign: "center", padding: "12px 10px" }}>
+                    <div style={{ fontSize: 9, color: G, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" as const, marginBottom: 4 }}>Recovery</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: "#059669" }}>78%</div>
+                    <div style={{ fontSize: 11, color: "#6B7280" }}>Strong</div>
                   </div>
-
-                  {/* AI MESSAGE */}
-                  <div style={cardGreen}>
-                    <div style={{ fontSize: 10, color: G, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" as const, marginBottom: 6 }}>AI Health Summary</div>
-                    <div style={{ fontSize: 14, color: GD, lineHeight: 1.7 }}>
-                      {wellScore >= 75
-                        ? `Your WellScore is ${wellScore} — great job! Keep up your healthy habits today.`
-                        : wellScore >= 50
-                          ? `Your WellScore is ${wellScore}. Focus on improving your sleep and increasing your daily steps.`
-                          : `Your WellScore is ${wellScore}. Please make sure to rest well, drink plenty of water, and take a short walk.`
-                      }
-                      {healthData.sleep_hours ? ` You slept ${healthData.sleep_hours} hours last night.` : ""}
-                    </div>
+                  <div style={{ ...card, marginBottom: 0, textAlign: "center", padding: "12px 10px" }}>
+                    <div style={{ fontSize: 9, color: RED, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" as const, marginBottom: 4 }}>Heart Rate</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: RED }}>72</div>
+                    <div style={{ fontSize: 11, color: "#6B7280" }}>BPM · Normal</div>
                   </div>
+                </div>
+              </div>
 
-                  {/* METRICS GRID */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
-                    {[
-                      { l: "Sleep", v: healthData.sleep_hours ? `${healthData.sleep_hours}h` : "—", c: PURPLE, bg: "#F5F3FF" },
-                      { l: "Calories", v: healthData.calories ? healthData.calories.toLocaleString() : "—", c: GOLD, bg: "#FFFBEB" },
-                      { l: "SpO2", v: healthData.spo2 ? `${healthData.spo2}%` : "—", c: G, bg: GL },
-                      { l: "Weight", v: healthData.weight ? `${healthData.weight}kg` : "—", c: "#FF6B35", bg: "#FFF7ED" },
-                      { l: "Water", v: healthData.water_glasses ? `${healthData.water_glasses}/8` : "—", c: BLUE, bg: "#EFF6FF" },
-                      { l: "Stress", v: healthData.stress_level || "—", c: G, bg: GL },
-                    ].map(m => (
-                      <div key={m.l} style={{ background: m.bg, borderRadius: 12, padding: "10px 8px", textAlign: "center", border: "1px solid #F3F4F6" }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: m.c }}>{m.v}</div>
-                        <div style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>{m.l}</div>
-                      </div>
-                    ))}
+              <div style={cardGreen}>
+                <div style={{ fontSize: 10, color: G, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" as const, marginBottom: 6 }}>AI Morning Message</div>
+                <div style={{ fontSize: 14, color: GD, lineHeight: 1.7 }}>Good morning! Your sleep was restful at 7.4 hours and heart rate is steady. Today I recommend a 20-minute walk after lunch. Remember to drink 8 glasses of water. You are doing great!</div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
+                {[
+                  { l: "Sleep", v: "7.4", u: "hrs", c: PURPLE, bg: "#F5F3FF" },
+                  { l: "Steps", v: "3,240", u: "steps", c: BLUE, bg: "#EFF6FF" },
+                  { l: "Calories", v: "1,420", u: "kcal", c: GOLD, bg: "#FFFBEB" },
+                  { l: "SpO2", v: "98", u: "%", c: G, bg: GL },
+                  { l: "Weight", v: "68.2", u: "kg", c: "#FF6B35", bg: "#FFF7ED" },
+                  { l: "Stress", v: "Low", u: "", c: G, bg: GL },
+                ].map(m => (
+                  <div key={m.l} style={{ background: m.bg, borderRadius: 12, padding: "10px 8px", textAlign: "center", border: "1px solid #F3F4F6" }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: m.c }}>{m.v}</div>
+                    <div style={{ fontSize: 10, color: m.c, opacity: 0.7 }}>{m.u}</div>
+                    <div style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>{m.l}</div>
                   </div>
-                </>
-              )}
+                ))}
+              </div>
 
-              {/* LOG BUTTON */}
-              <button onClick={() => setLogOpen(true)} style={{ width: "100%", padding: 14, borderRadius: 14, background: hasData ? "#F9FAFB" : G, border: hasData ? "1.5px dashed #E5E7EB" : "none", color: hasData ? "#374151" : "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                {hasData ? "✏️ Update Today Health Data" : "📋 Log Today Health Data +"}
-              </button>
-
-              {/* HEALTH TIPS */}
-              <div style={{ fontSize: 10, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: 0.8, margin: "4px 0 10px" }}>Today Health Tips</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: 0.8, margin: "14px 0 10px" }}>Today Health Tips</div>
               {[
-                { emoji: "💧", tip: "Drink a glass of water now", sub: `You have had ${healthData.water_glasses || 0} of 8 glasses today`, id: "t1" },
-                { emoji: "🚶", tip: "Time for a short walk", sub: "20 minutes after lunch is ideal for digestion", id: "t2" },
-                { emoji: "🌙", tip: "Wind down at 10pm tonight", sub: "Good sleep keeps your heart healthy", id: "t3" },
+                { emoji: "💧", tip: "Drink a glass of water now", sub: "You have had 3 of 8 glasses today", id: "t1" },
+                { emoji: "🚶", tip: "Time for a short walk", sub: "20 minutes after lunch is ideal", id: "t2" },
+                { emoji: "🌙", tip: "Wind down reminder at 10pm", sub: "Good sleep keeps your heart healthy", id: "t3" },
               ].map(t => (
                 <div key={t.id} style={{ ...card, display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 10, background: GL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 18 }}>{t.emoji}</div>
@@ -825,7 +501,6 @@ export default function Dashboard() {
                 </div>
               ))}
 
-              {/* SOS */}
               <button onClick={() => setSosOpen(true)} style={{ width: "100%", padding: 16, borderRadius: 14, background: RED, border: "none", color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                 🆘 SOS — Alert My Family Now
               </button>
@@ -835,23 +510,15 @@ export default function Dashboard() {
 
           {tab === "ai" && (
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: 14, background: GL, borderRadius: 14, border: `1px solid ${GB}` }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: G, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, color: "#fff", fontWeight: 700 }}>AI</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: GD }}>VellCare AI Coach</div>
-                  <div style={{ fontSize: 11, color: G, marginTop: 2 }}>Powered by Claude · Your personal health guardian</div>
-                </div>
-                <div style={{ background: G, borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "#fff", fontWeight: 700 }}>LIVE</div>
-              </div>
-              <AiCoach name={name} />
+                        <AiCoach name={name} />
             </div>
           )}
 
-          {tab === "family" && <FamilyTab userId={profile.id} />}
+          {tab === "family" && <FamilyTab />}
           {tab === "devices" && <DevicesTab />}
-          {tab === "community" && <CommunityTab userId={profile.id} userSteps={steps} />}
-          {tab === "plans" && <PlansTab plan={profile.subscription_plan || "free"} />}
-
+          {tab === "community" && <CommunityTab />}
+          {tab === "plans" && <PlansTab />}
+          {tab === "settings" && <SettingsTab userId={profile.id} userName={name} />}
         </div>
       </div>
     </div>
