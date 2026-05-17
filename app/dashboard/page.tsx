@@ -518,7 +518,7 @@ export default function Dashboard() {
           {tab === "devices" && <DevicesTab />}
           {tab === "community" && <CommunityTab />}
           {tab === "plans" && <PlansTab />}
-          {tab === "settings" && <SettingsTab userId={profile.id} userName={name} />}
+          {tab === "settings" && <SettingsTab userId={(profile as any).id} userName={name} />}
         </div>
       </div>
     </div>
